@@ -7,6 +7,8 @@ output: html_document
 
 Activity data loading using `read.csv`
 ```{r}
+library(lattice)
+
 activity <- read.csv("activity.csv", header = T)
 activity$date <- as.Date(activity$date)
 activity$interval <- as.integer(activity$interval)
@@ -14,17 +16,17 @@ activity$interval <- as.integer(activity$interval)
 
 What is mean total number of steps taken per day?
 ```{r}
-totals.daily <- tapply(activity$steps, activity$date, sum, na.rm=T)
-barplot(totals.daily, main = "total steps per day", ylab = "steps", xlab = "day")
-print(paste0("Mean of total number of steps per day is ", mean(totals.daily)))
-print(paste0("Median of total number of steps per day is ", median(totals.daily)))
+totals <- aggregate(steps ~ date, activity, sum, na.rm=T)
+histogram(~steps, totals)
+summary(totals)
 ```
 
 What is the average daily activity pattern?
 ```{r}
-totals.interval <- tapply(activity$steps, activity$interval, mean, na.rm=T)
-plot(row.names(totals.interval), totals.interval, main = "average steps per interval", ylab = "steps", xlab = "interval", type ="l")
-print(paste0("Interval with max number of steps accross all days is ", names(sort(totals.interval, decreasing = T)[1])))
+totals.interval <- aggregate(steps ~ interval, activity, sum, na.rm=T)
+xyplot(steps ~ interval, data=totals.interval, main = "average steps per interval", ylab = "steps", xlab = "interval", type ="l")
+max_interval <- totals.interval$interval[which(totals.interval$steps == max(totals.interval$steps))]
+print(paste0("Interval with max number of steps accross all days is ", max_interval))
 ```
 
 Histogram after imputing NAs by filling in average value for time interval
@@ -32,22 +34,24 @@ Histogram after imputing NAs by filling in average value for time interval
 ```{r}
 print(paste0("Number of rows with mising NAs is ", sum(!complete.cases(activity))))
 activity.full <- activity[,]
-activity.full[!complete.cases(activity),]$steps <- totals.interval[as.character(activity.full[!complete.cases(activity),]$interval)]
-totals.daily.full <- tapply(activity.full$steps, activity.full$date, sum)
-barplot(totals.daily.full, main = "total steps per day (w/Imputed NAs)", ylab = "steps", xlab = "day")
-print(paste0("Mean of total number of steps per day (w/Imputed NAs) is ", mean(totals.daily.full)))
-print(paste0("Median of total number of steps per day (w/Imputed NAs) is ", median(totals.daily.full)))
+activity.full[!complete.cases(activity.full),'steps'] <- mean(activity$steps, na.rm=T)
+totals <- aggregate(steps ~ date, activity.full, sum)
+histogram(~steps, totals)
+summary(totals)
 ```
 
-Using imputed NAs with average intervals shows moderate changes to the mean compared the the original value as well as the median. The major change would be the mean is now equal to the median.
-
-```{r}
-print(paste0("Mean of total number of steps per day is ", mean(totals.daily), " compared to ", mean(totals.daily.full), " with Imputed NA's"))
-
-print(paste0("Median of total number of steps per day is ", median(totals.daily), " compared to ", median(totals.daily.full), " with Imputed NA's"))
-```
+Using imputed NAs with mean of steps shows minor changes to the mean compared the the original value, while the median stayed the same.
 
 Are there differences in activity patterns between weekdays and weekends?
-For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
-Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
-Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+```{r}
+activity.type <- cbind(activity.full, type=as.factor(
+  ifelse(weekdays(activity.full$date) == "Saterday" 
+         | weekdays(activity.full$date) == "Sunday", "weekend", "weekday")))
+
+totals <- aggregate(steps ~ interval + type, activity.type, mean)
+
+xyplot(steps ~ interval | type, type = "l", layout = c(1, 2),
+    main = "Average Number of Steps by Time Interval", data=totals,
+    xlab = "Time Interval (5-mins)", ylab = "Average number of steps")
+```
