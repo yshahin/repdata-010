@@ -29,7 +29,8 @@ max_interval <- totals.interval$interval[which(totals.interval$steps == max(tota
 print(paste0("Interval with max number of steps accross all days is ", max_interval))
 ```
 
-Histogram after imputing NAs by filling in average value for time interval
+Histogram after imputing NAs by filling in average value for steps on the entire dataset
+
 
 ```{r}
 print(paste0("Number of rows with mising NAs is ", sum(!complete.cases(activity))))
