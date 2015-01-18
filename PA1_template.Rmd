@@ -24,28 +24,27 @@ What is the average daily activity pattern?
 ```{r}
 totals.interval <- tapply(activity$steps, activity$interval, mean, na.rm=T)
 plot(row.names(totals.interval), totals.interval, main = "average steps per interval", ylab = "steps", xlab = "interval", type ="l")
-print(paste0("Interval with max number of steps accross all days is  ", names(sort(totals.interval, decreasing = T)[1])))
+print(paste0("Interval with max number of steps accross all days is ", names(sort(totals.interval, decreasing = T)[1])))
 ```
 
-Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+Histogram after imputing NAs by filling in average value for time interval
 
 ```{r}
 print(paste0("Number of rows with mising NAs is ", sum(!complete.cases(activity))))
-activity.interval.full <- activity[,]
-activity.interval.full[!complete.cases(activity),]$steps <- totals.interval[as.character(activity.interval.full[!complete.cases(activity),]$interval)]
-
-activity.daily.full <- activity[,]
-activity.daily.full[!complete.cases(activity),]$steps <- totals.daily[as.character(activity.daily.full[!complete.cases(activity),]$interval)]
-
-totals.daily.full <- tapply(activity.daily.full$steps, activity.daily.full$date, sum)
-totals.daily.full <- tapply(activity.interval.full$steps, activity.daily.full$date, sum)
+activity.full <- activity[,]
+activity.full[!complete.cases(activity),]$steps <- totals.interval[as.character(activity.full[!complete.cases(activity),]$interval)]
+totals.daily.full <- tapply(activity.full$steps, activity.full$date, sum)
 barplot(totals.daily.full, main = "total steps per day (w/Imputed NAs)", ylab = "steps", xlab = "day")
+print(paste0("Mean of total number of steps per day (w/Imputed NAs) is ", mean(totals.daily.full)))
+print(paste0("Median of total number of steps per day (w/Imputed NAs) is ", median(totals.daily.full)))
+```
 
-plot(totals.daily, col='blue')
-points(totals.daily.full, col='red')
+Using imputed NAs with average intervals shows moderate changes to the mean compared the the original value as well as the median. The major change would be the mean is now equal to the median.
 
-print(paste0("Mean of total number of steps per day w/imputed NAs is ", mean(totals.daily.full)))
-print(paste0("Median of total number of steps per day w/imputed NAs is ", median(totals.daily.full)))
+```{r}
+print(paste0("Mean of total number of steps per day is ", mean(totals.daily), " compared to ", mean(totals.daily.full), " with Imputed NA's"))
+
+print(paste0("Median of total number of steps per day is ", median(totals.daily), " compared to ", median(totals.daily.full), " with Imputed NA's"))
 ```
 
 Are there differences in activity patterns between weekdays and weekends?
